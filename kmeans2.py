@@ -1,8 +1,8 @@
 import sys
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.metrics import silhouette_score
+from sklearn.cluster import KMeans
+
 import os
 
 # Lấy đường dẫn file đầu vào và đầu ra từ tham số dòng lệnh
@@ -25,15 +25,12 @@ vectorizer = TfidfVectorizer(stop_words='english')
 features = vectorizer.fit_transform(documents)
 
 # Sử dụng Mini-Batch K-Means
-model = MiniBatchKMeans(n_clusters=k, init='k-means++', max_iter=100, n_init=1, batch_size=100)
+model = KMeans(n_clusters=k, init='k-means++', max_iter=100, n_init=1)
 model.fit(features)
 
 # Gán nhãn cụm cho từng phim
 df['cluster'] = model.labels_
 
-# Tính toán và in ra Silhouette Score
-silhouette_avg = silhouette_score(features, model.labels_)
-print(f'Silhouette Score: {silhouette_avg:.3f}')
 
 # Xuất kết quả ra các file CSV, mỗi file đại diện cho một cụm
 clusters = df.groupby('cluster')
