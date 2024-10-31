@@ -1,6 +1,17 @@
-# Step 1: Load the data
+import sys
 import pandas as pd
-df = pd.read_csv("Movies_Dataset_1.csv")
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.metrics import silhouette_score
+import os
+
+# Lấy đường dẫn file đầu vào và đầu ra từ tham số dòng lệnh
+input_file = sys.argv[1]
+output_folder = sys.argv[2]
+k = int(sys.argv[3])  # số cụm k
+
+# Step 1: Load the data
+df = pd.read_csv(input_file)
 
 # Hiển thị 5 dòng đầu tiên của DataFrame
 df.head()
@@ -9,18 +20,9 @@ df.head()
 df.info()
 
 # Step 3: Data preprocessing
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.metrics import silhouette_score  # Thêm import cho Silhouette Score
-
 documents = df['overview'].values.astype("U")
-
-# Chuyển đổi văn bản thành vector đặc trưng với TF-IDF
 vectorizer = TfidfVectorizer(stop_words='english')
 features = vectorizer.fit_transform(documents)
-
-# Số lượng cụm
-k = 5
 
 # Sử dụng Mini-Batch K-Means
 model = MiniBatchKMeans(n_clusters=k, init='k-means++', max_iter=100, n_init=1, batch_size=100)
@@ -29,29 +31,26 @@ model.fit(features)
 # Gán nhãn cụm cho từng phim
 df['cluster'] = model.labels_
 
-# Hiển thị 5 dòng đầu tiên của DataFrame với cột 'cluster'
-df.head()
-
 # Tính toán và in ra Silhouette Score
-silhouette_avg = silhouette_score(features, model.labels_)  # Tính Silhouette Score
-print(f'Silhouette Score: {silhouette_avg:.3f}')  # In ra Silhouette Score
+silhouette_avg = silhouette_score(features, model.labels_)
+print(f'Silhouette Score: {silhouette_avg:.3f}')
 
-# Xuất kết quả ra file CSV
+# Xuất kết quả ra các file CSV, mỗi file đại diện cho một cụm
 clusters = df.groupby('cluster')
 
 for cluster in clusters.groups:
-    f = open('cluster' + str(cluster) + '.csv', 'w', encoding='utf-8')  # thêm encoding='utf-8'
-    data = clusters.get_group(cluster)[['title', 'overview']]  # lấy cột title và overview
-    f.write(data.to_csv(index_label='id'))  # thiết lập chỉ mục là id
-    f.close()
+    # Tạo đường dẫn lưu file cho từng cụm
+    output_file = os.path.join(output_folder, f'cluster_{cluster}.csv')
+    data = clusters.get_group(cluster)[['title', 'overview']]
+    data.to_csv(output_file, index_label='id', encoding='utf-8')
 
 # In ra các tâm cụm
-print("Cluster centroids: \n")
+print("Cluster centroids:")
 order_centroids = model.cluster_centers_.argsort()[:, ::-1]
 terms = vectorizer.get_feature_names_out()
 
 for i in range(k):
-    print("Cluster %d:" % i)
-    for j in order_centroids[i, :10]:  # in ra 10 từ đặc trưng của mỗi cụm
-        print(' %s' % terms[j])
+    print(f"Cluster {i}:")
+    for j in order_centroids[i, :10]:
+        print(f' {terms[j]}')
     print('------------')

@@ -1,12 +1,16 @@
-# Step 1: Load the data
+import sys
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import silhouette_score
 
-df = pd.read_csv("Movies_Dataset_2.csv")
+# Lấy đường dẫn file đầu vào từ tham số dòng lệnh
+input_file = sys.argv[1]
+k_input = int(sys.argv[2])
+
+# Step 1: Load the data
+df = pd.read_csv(input_file)
 
 # Hiển thị 5 dòng đầu tiên của DataFrame
 df.head()
@@ -21,10 +25,9 @@ features = vectorizer.fit_transform(documents)
 
 # Chạy Silhouette Score cho nhiều giá trị của k
 silhouette_scores = []
-k_values = range(2, 30)  # thử nghiệm với k từ 2 đến 10
+k_values = range(2, k_input)  # thử nghiệm với k từ 2 đến 30
 
 for k in k_values:
-    # model = MiniBatchKMeans(n_clusters=k, init='k-means++', max_iter=100, n_init=1, batch_size=100)
     model = KMeans(n_clusters=k, init='k-means++', max_iter=100, n_init=1)
     model.fit(features)
     silhouette_avg = silhouette_score(features, model.labels_)
