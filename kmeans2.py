@@ -24,7 +24,7 @@ documents = df['overview'].values.astype("U")
 vectorizer = TfidfVectorizer(stop_words='english')
 features = vectorizer.fit_transform(documents)
 
-# Sử dụng Mini-Batch K-Means
+# Sử dụng K-Means
 model = KMeans(n_clusters=k, init='k-means++', max_iter=100, n_init=1)
 model.fit(features)
 
